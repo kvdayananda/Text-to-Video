@@ -1,0 +1,431 @@
+.generator-page {
+  padding: 40px 36px;
+  min-height: 100vh;
+}
+
+.gen-header {
+  margin-bottom: 36px;
+}
+
+.gen-header h1 {
+  font-size: 2rem;
+  letter-spacing: -0.03em;
+  margin-bottom: 6px;
+}
+
+.gen-header p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* Layout */
+.gen-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Cards */
+.gen-card {
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.gen-card:last-of-type { margin-bottom: 0; }
+
+.gen-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.gen-card-icon { font-size: 1.2rem; }
+
+.gen-card-header h2 {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+/* Prompt textarea */
+.gen-prompt {
+  width: 100%;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 16px;
+  color: white;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  transition: all 0.25s ease;
+  min-height: 120px;
+}
+
+.gen-prompt:focus {
+  border-color: rgba(138,43,226,0.5);
+  background: rgba(138,43,226,0.03);
+  box-shadow: 0 0 0 3px rgba(138,43,226,0.08);
+}
+
+.gen-prompt::placeholder { color: rgba(255,255,255,0.2); }
+
+.gen-prompt:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.prompt-hint {
+  margin-top: 10px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* Settings */
+.settings-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.setting-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setting-group label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text-muted);
+  padding: 6px 14px;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chip:hover {
+  background: rgba(138,43,226,0.08);
+  border-color: rgba(138,43,226,0.3);
+  color: white;
+}
+
+.chip.active {
+  background: rgba(138,43,226,0.15);
+  border-color: rgba(138,43,226,0.5);
+  color: white;
+}
+
+.chip:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.gen-select {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 10px 14px;
+  color: white;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23808090' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+.gen-select:focus { border-color: rgba(138,43,226,0.5); }
+.gen-select:disabled { opacity: 0.5; cursor: not-allowed; }
+.gen-select option { background: #12122a; }
+
+/* Generate button */
+.gen-btn {
+  width: 100%;
+  justify-content: center;
+  padding: 16px !important;
+  font-size: 1.1rem !important;
+}
+
+.gen-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Output / Placeholder */
+.gen-output {
+  position: sticky;
+  top: 24px;
+}
+
+.gen-placeholder {
+  padding: 60px 32px;
+  border-radius: 20px;
+  text-align: center;
+}
+
+.placeholder-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  opacity: 0.4;
+}
+
+.gen-placeholder h3 {
+  font-size: 1.3rem;
+  margin-bottom: 10px;
+  color: rgba(255,255,255,0.6);
+}
+
+.gen-placeholder p {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+  max-width: 280px;
+  margin: 0 auto 24px;
+}
+
+.placeholder-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.placeholder-chip {
+  background: rgba(0,229,255,0.06);
+  border: 1px solid rgba(0,229,255,0.15);
+  color: rgba(0,229,255,0.7);
+  font-size: 0.75rem;
+  padding: 4px 12px;
+  border-radius: 50px;
+}
+
+/* Progress panel */
+.gen-progress-panel {
+  border-radius: 20px;
+  padding: 28px;
+}
+
+.gpp-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.gpp-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(138,43,226,0.2);
+  border-top-color: #8a2be2;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  flex-shrink: 0;
+}
+
+.gpp-done-icon {
+  font-size: 2.5rem;
+  flex-shrink: 0;
+}
+
+.gpp-header h3 {
+  font-size: 1.2rem;
+  margin-bottom: 4px;
+}
+
+.gpp-sub {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Progress bar */
+.progress-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #8a2be2, #00e5ff);
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.progress-pct {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: white;
+  min-width: 40px;
+  text-align: right;
+}
+
+/* Step rows */
+.gen-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.gen-step-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  transition: all 0.3s ease;
+}
+
+.gen-step-row.active {
+  background: rgba(138,43,226,0.08);
+  border-color: rgba(138,43,226,0.2);
+}
+
+.gen-step-row.done {
+  background: rgba(74,222,128,0.05);
+  border-color: rgba(74,222,128,0.1);
+}
+
+.step-row-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  background: rgba(255,255,255,0.05);
+  flex-shrink: 0;
+}
+
+.gen-step-row.done .step-row-icon {
+  background: rgba(74,222,128,0.1);
+  color: #4ade80;
+  font-weight: 700;
+}
+
+.gen-step-row.active .step-row-icon {
+  background: rgba(138,43,226,0.15);
+  color: #c77dff;
+}
+
+.step-spin {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.step-row-label {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.75);
+}
+
+.step-row-status {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.gen-step-row.done .step-row-status { color: #4ade80; }
+.gen-step-row.active .step-row-status { color: #c77dff; }
+
+/* Done actions */
+.gen-done-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.gen-done-actions .btn-primary,
+.gen-done-actions .btn-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px !important;
+  font-size: 0.88rem !important;
+  border-radius: 12px;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.gen-done-actions .btn-secondary {
+  background: rgba(255,255,255,0.04);
+  color: white;
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.gen-done-actions .btn-secondary:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.gen-reset-btn {
+  grid-column: 1 / -1;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 8px;
+  transition: color 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.gen-reset-btn:hover { color: white; }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .gen-layout { grid-template-columns: 1fr; }
+  .gen-output { position: static; }
+  .generator-page { padding: 24px 20px; }
+}
+
+@media (max-width: 600px) {
+  .setting-row { grid-template-columns: 1fr; }
+  .gen-done-actions { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,275 @@
+.help-page {
+  padding: 40px;
+}
+
+/* Hero Box */
+.help-hero {
+  padding: 60px 48px;
+  text-align: center;
+  max-width: 900px;
+  margin: 0 auto 40px;
+}
+
+.help-hero h1 {
+  font-size: 2.8rem;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.help-hero p {
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  margin-bottom: 24px;
+}
+
+.help-search-bar {
+  width: 100%;
+  max-width: 500px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--glass-border);
+  padding: 14px 20px;
+  border-radius: 12px;
+  color: white;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.help-search-bar:focus {
+  border-color: var(--secondary);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.25);
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* Categories Grid */
+.help-categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+  margin-bottom: 60px;
+}
+
+.help-cat-card {
+  padding: 32px 24px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.help-cat-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--secondary);
+}
+
+.hcat-icon {
+  font-size: 2.5rem;
+  margin-bottom: 16px;
+  display: inline-block;
+}
+
+.help-cat-card h3 {
+  font-size: 1.15rem;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.help-cat-card p {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  min-height: 54px;
+}
+
+.hcat-link {
+  color: var(--secondary);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+/* Split Pane Layout */
+.help-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: start;
+}
+
+.help-faq-panel,
+.help-ticket-panel {
+  padding: 40px;
+}
+
+.help-faq-panel h2,
+.help-ticket-panel h2 {
+  font-size: 1.6rem;
+  color: white;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 16px;
+}
+
+/* FAQ list */
+.hfaq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hfaq-card {
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.hfaq-card:hover {
+  background: rgba(255,255,255,0.01);
+}
+
+.hfaq-card.open {
+  border-color: var(--secondary);
+}
+
+.hfaq-q-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.hfaq-q-row h4 {
+  font-size: 1.02rem;
+  font-weight: 600;
+  color: white;
+}
+
+.hfaq-q-row span {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.hfaq-a-block {
+  margin-top: 12px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  border-top: 1px solid var(--glass-border);
+  padding-top: 12px;
+  animation: hfaqFade 0.3s ease-out;
+}
+
+@keyframes hfaqFade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Ticket form details */
+.ticket-sub {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 24px;
+}
+
+.ticket-input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: white;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.ticket-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 10px rgba(138, 43, 226, 0.2);
+}
+
+.ticket-textarea {
+  resize: vertical;
+}
+
+.ticket-submit-btn {
+  width: 100%;
+  justify-content: center;
+  margin-top: 8px;
+  border: none;
+}
+
+.ticket-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(255,255,255,0.2);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: hfaqSpin 0.8s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes hfaqSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Ticket Success */
+.ticket-success {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.ts-icon {
+  font-size: 3.5rem;
+  margin-bottom: 16px;
+}
+
+.ticket-success h3 {
+  font-size: 1.4rem;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.ts-meta {
+  color: var(--secondary);
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+
+.ticket-success p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.ts-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+@media (max-width: 968px) {
+  .help-split {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .help-page {
+    padding: 24px;
+  }
+  .help-hero {
+    padding: 40px 20px;
+  }
+  .help-hero h1 {
+    font-size: 2.2rem;
+  }
+  .help-faq-panel,
+  .help-ticket-panel {
+    padding: 24px 20px;
+  }
+}

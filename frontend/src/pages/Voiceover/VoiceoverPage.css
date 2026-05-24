@@ -1,0 +1,428 @@
+.voiceover-page {
+  padding: 40px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.vo-header {
+  margin-bottom: 40px;
+}
+
+.vo-header h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+}
+
+.vo-header p {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+}
+
+.vo-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: start;
+}
+
+@media (max-width: 1200px) {
+  .vo-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vo-card, .vo-library-card {
+  padding: 32px;
+  border-radius: 24px;
+}
+
+.vo-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 32px;
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 16px;
+}
+
+.vo-card-header span {
+  font-size: 1.8rem;
+}
+
+.vo-card-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.form-group {
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+/* Neural Voice Cards Grid */
+.voices-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.voice-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.voice-card:hover {
+  border-color: rgba(0, 229, 255, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-2px);
+}
+
+.voice-card.active {
+  border-color: var(--secondary);
+  background: rgba(0, 229, 255, 0.05);
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.15);
+}
+
+.voice-meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.voice-emoji {
+  font-size: 1.8rem;
+}
+
+.voice-meta h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.voice-meta span {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.voice-tag {
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 4px 8px;
+  border-radius: 6px;
+  align-self: flex-start;
+  color: var(--text-muted);
+}
+
+.preview-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid transparent;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-end;
+  transition: all 0.2s ease;
+}
+
+.preview-btn:hover {
+  background: var(--secondary);
+  color: #000;
+}
+
+/* Form Elements */
+.vo-textarea {
+  background: rgba(10, 10, 25, 0.4);
+  border: 1px solid var(--glass-border);
+  color: white;
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 1rem;
+  font-family: inherit;
+  outline: none;
+  resize: vertical;
+  transition: all 0.3s ease;
+}
+
+.vo-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 10px rgba(138, 43, 226, 0.2);
+}
+
+.sliders-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 600px) {
+  .sliders-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.slider-item input[type="range"] {
+  width: 100%;
+  accent-color: var(--secondary);
+  background: rgba(255, 255, 255, 0.1);
+  height: 6px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.slider-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.slider-value {
+  color: var(--secondary);
+  font-weight: 600;
+}
+
+.vo-gen-btn {
+  width: 100%;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.vo-gen-btn.loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.vo-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: vo-spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+@keyframes vo-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Generated library styles */
+.vo-lib-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+}
+
+.vo-lib-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.badge-count {
+  font-size: 0.85rem;
+  background: rgba(138, 43, 226, 0.2);
+  color: #c084fc;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.vo-library-empty {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+
+.vo-library-empty h3 {
+  font-size: 1.25rem;
+  margin-bottom: 8px;
+}
+
+.vo-library-empty p {
+  color: var(--text-muted);
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.vo-tracks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 580px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.track-row {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  transition: all 0.3s ease;
+}
+
+.track-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(138, 43, 226, 0.2);
+}
+
+.track-row.playing {
+  border-color: var(--secondary);
+  background: rgba(0, 229, 255, 0.02);
+}
+
+.track-details {
+  flex: 1;
+}
+
+.track-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.track-voice-tag {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--secondary);
+}
+
+.track-meta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.track-text {
+  font-size: 0.95rem;
+  color: var(--text-main);
+  line-height: 1.5;
+  margin-bottom: 12px;
+  font-style: italic;
+}
+
+/* Audio wave lines */
+.waveform-container {
+  height: 24px;
+  display: flex;
+  align-items: center;
+}
+
+.waveform {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
+.wave-bar {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.15);
+  height: 12px;
+  border-radius: 2px;
+  transition: height 0.3s ease;
+}
+
+.waveform.animating .wave-bar {
+  background: var(--secondary);
+}
+
+.waveform.animating .wave-bar:nth-child(2n) { animation: voice-wave-anim 0.7s ease-in-out infinite alternate; }
+.waveform.animating .wave-bar:nth-child(3n) { animation: voice-wave-anim 0.5s ease-in-out infinite alternate; }
+.waveform.animating .wave-bar:nth-child(5n) { animation: voice-wave-anim 0.9s ease-in-out infinite alternate; }
+.waveform.animating .wave-bar:nth-child(7n) { animation: voice-wave-anim 0.6s ease-in-out infinite alternate; }
+
+@keyframes voice-wave-anim {
+  0% { height: 4px; }
+  100% { height: 24px; }
+}
+
+.track-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: center;
+}
+
+.track-play-btn {
+  background: var(--secondary);
+  color: black;
+  border: none;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.track-play-btn:hover {
+  background: #00b8cc;
+  transform: translateY(-1px);
+}
+
+.track-play-btn.active {
+  background: var(--primary);
+  color: white;
+}
+
+.track-action-btn {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  border: 1px solid var(--glass-border);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.track-action-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.track-action-btn.delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}

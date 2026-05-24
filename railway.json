@@ -1,0 +1,49 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "services": {
+    "api": {
+      "name": "VisionForge API",
+      "watchPatterns": ["backend/**"],
+      "source": {
+        "root": "backend"
+      },
+      "build": {
+        "builder": "DOCKERFILE",
+        "dockerfilePath": "Dockerfile"
+      },
+      "deploy": {
+        "startCommand": "uvicorn app.main:app --host 0.0.0.0 --port $PORT",
+        "restartPolicyType": "ON_FAILURE"
+      }
+    },
+    "worker": {
+      "name": "VisionForge Celery Worker",
+      "watchPatterns": ["backend/**"],
+      "source": {
+        "root": "backend"
+      },
+      "build": {
+        "builder": "DOCKERFILE",
+        "dockerfilePath": "Dockerfile"
+      },
+      "deploy": {
+        "startCommand": "celery -A app.celery_app worker --loglevel=info",
+        "restartPolicyType": "ON_FAILURE"
+      }
+    },
+    "web": {
+      "name": "VisionForge Web Client",
+      "watchPatterns": ["frontend/**"],
+      "source": {
+        "root": "frontend"
+      },
+      "build": {
+        "builder": "DOCKERFILE",
+        "dockerfilePath": "Dockerfile"
+      },
+      "deploy": {
+        "restartPolicyType": "ON_FAILURE"
+      }
+    }
+  }
+}
