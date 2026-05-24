@@ -25,4 +25,4 @@ celery_app.conf.update(
 )
 
 # Auto-discover tasks under video engine
-celery_app.autodiscover_tasks(["backend.app.video_engine"])
+celery_app.autodiscover_tasks(["app.video_engine"])
