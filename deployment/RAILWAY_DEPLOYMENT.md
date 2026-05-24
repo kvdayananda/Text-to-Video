@@ -69,6 +69,8 @@ Ensure the following variables are configured under the **Variables** tab of you
 | `JWT_SECRET` | `generate-a-secure-random-string` | Secret key for decrypting Fernet auth tokens. |
 | `API_ORIGINS` | `https://your-frontend-railway-url.app` | Allows CORS requests from your React client. |
 | `STORAGE_PROVIDER` | `s3` or `r2` | Chooses active cloud storage (defaults to local fallback). |
+| `AWS_CDN_DOMAIN` | `https://your-domain.cloudfront.net` | Optional: Rewrites AWS S3 URLs to route through CloudFront CDN edges. |
+| `R2_PUBLIC_DOMAIN` | `https://cdn.yourdomain.com` | Optional: Directs Cloudflare R2 downloads through your custom domain CDN proxy. |
 
 ### 🌐 Web Service (VisionForge Web Client)
 Configure the following under the **Variables** tab of the React frontend service:

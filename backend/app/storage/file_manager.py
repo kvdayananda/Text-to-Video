@@ -72,7 +72,7 @@ def delete_file(file_url: str) -> bool:
     # Check if this is a cloud URL
     if file_url.startswith("http://") or file_url.startswith("https://"):
         # AWS S3 check
-        if s3_manager.is_active and s3_manager.bucket_name in file_url:
+        if s3_manager.is_active and (s3_manager.bucket_name in file_url or (s3_manager.cdn_domain and s3_manager.cdn_domain in file_url)):
             return s3_manager.delete(file_url)
             
         # Cloudflare R2 check

@@ -25,12 +25,14 @@ class S3StorageManager:
         bucket_name: Optional[str] = None,
         access_key: Optional[str] = None,
         secret_key: Optional[str] = None,
-        region_name: Optional[str] = None
+        region_name: Optional[str] = None,
+        cdn_domain: Optional[str] = None
     ):
         self.bucket_name = bucket_name or os.environ.get("AWS_BUCKET_NAME")
         self.access_key = access_key or os.environ.get("AWS_ACCESS_KEY_ID")
         self.secret_key = secret_key or os.environ.get("AWS_SECRET_ACCESS_KEY")
         self.region_name = region_name or os.environ.get("AWS_REGION", "us-east-1")
+        self.cdn_domain = cdn_domain or os.environ.get("AWS_CDN_DOMAIN")
         
         self.client = None
         if BOTO3_AVAILABLE and self.access_key and self.secret_key and self.bucket_name:
@@ -68,7 +70,12 @@ class S3StorageManager:
                     "ACL": "public-read"
                 }
             )
-            # Construct public access URL
+            # Rewrite URL to CDN domain if configured
+            if self.cdn_domain:
+                domain = self.cdn_domain.rstrip('/')
+                return f"{domain}/{key}"
+            
+            # Default public S3 URL
             url = f"https://{self.bucket_name}.s3.{self.region_name}.amazonaws.com/{key}"
             return url
         except ClientError as e:
@@ -80,8 +87,15 @@ class S3StorageManager:
         if not self.is_active:
             return False
 
-        # Parse key from URL if a full URL was passed
         key = key_or_url
+        
+        # Parse key from custom CDN URL if configured
+        if self.cdn_domain:
+            domain = self.cdn_domain.rstrip('/')
+            if key.startswith(domain):
+                key = key[len(domain):].lstrip('/')
+                
+        # Parse key from standard S3 URL
         url_prefix = f"https://{self.bucket_name}.s3.{self.region_name}.amazonaws.com/"
         if key.startswith(url_prefix):
             key = key[len(url_prefix):]
