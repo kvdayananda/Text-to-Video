@@ -9,6 +9,7 @@ passlib[bcrypt]==1.7.4
 moviepy==1.0.3
 opencv-python==4.8.1.78
 imageio-ffmpeg==0.4.8
+celery==5.4.0
 numpy==1.26.4
 Pillow==10.0.1
 cryptography==41.0.5

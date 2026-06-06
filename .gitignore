@@ -17,7 +17,15 @@ __pycache__/
 env/
 venv/
 .venv/
+.venv2/
 pyvenv.cfg
+
+# Virtual environments
+backend/.venv2/
+
+# Runtime artifacts
+/backend/voiceovers/
+/backend/app/publish_system/data/
 
 # IDE
 .vscode/

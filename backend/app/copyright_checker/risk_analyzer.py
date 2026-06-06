@@ -1,7 +1,7 @@
 from typing import Any
 
 
-def build_risk_report(audio_scan: dict[str, Any], video_scan: dict[str, Any], image_scan: dict[str, Any], trademark_scan: bool) -> dict[str, Any]:
+def build_risk_report(audio_scan: dict[str, Any], video_scan: dict[str, Any], image_scan: dict[str, Any], trademark_scan: dict[str, Any]) -> dict[str, Any]:
     findings = []
     score = 100
 
@@ -16,7 +16,7 @@ def build_risk_report(audio_scan: dict[str, Any], video_scan: dict[str, Any], im
         })
         score -= 40
     elif audio_scan.get("available"):
-        score -= min(16, max(0, 20 - audio_scan.get("score", 0)))
+        score -= min(20, max(0, int((100 - audio_scan.get("score", 0)) / 4)))
 
     if video_scan.get("available") and video_scan.get("duplicate"):
         findings.append({
@@ -29,30 +29,35 @@ def build_risk_report(audio_scan: dict[str, Any], video_scan: dict[str, Any], im
         })
         score -= 24
     elif video_scan.get("available"):
-        score -= min(12, max(0, 20 - video_scan.get("score", 0)))
+        score -= min(16, max(0, int((100 - video_scan.get("score", 0)) / 3)))
 
     if image_scan.get("available") and image_scan.get("bestMatch"):
-        similarity = image_scan["bestMatch"].get("similarity", "0%")
+        confidence = int(image_scan["bestMatch"].get("confidence", 0))
+        severity = "Low"
+        if confidence >= 75:
+            severity = "Medium"
         findings.append({
             "id": len(findings) + 1,
             "type": "Similar Image Match",
-            "severity": "Low",
+            "severity": severity,
             "timestamp": "00:10 - 00:15",
             "source": image_scan["bestMatch"].get("source", "Stock image archive"),
             "recommendation": "Use an original thumbnail or frame capture to reduce reuse risk.",
         })
-        score -= 12
+        score -= min(16, max(0, int(confidence / 8)))
 
-    if trademark_scan:
-        findings.append({
-            "id": len(findings) + 1,
-            "type": "Trademark Overlay Check",
-            "severity": "Low",
-            "timestamp": "00:00 - 00:30",
-            "source": "Logo & brand text scanner",
-            "recommendation": "Remove or blur trademarked logos and names unless you have explicit permission.",
-        })
-        score -= 8
+    if trademark_scan.get("available") and trademark_scan.get("matches"):
+        for trademark in trademark_scan["matches"]:
+            severity = trademark.get("severity", "Low")
+            findings.append({
+                "id": len(findings) + 1,
+                "type": trademark.get("type", "Trademark Overlay Check"),
+                "severity": severity,
+                "timestamp": trademark.get("timestamp", "00:00 - 00:30"),
+                "source": trademark.get("source", "Logo & brand text scanner"),
+                "recommendation": trademark.get("recommendation", "Review any identified trademarks and remove them if you do not have permission."),
+            })
+            score -= 8 if severity == "Low" else 16
 
     score = max(0, min(100, score))
     status = "Safe & Clear" if score >= 85 and not any(f["severity"] == "High" for f in findings) else "Medium Risk"

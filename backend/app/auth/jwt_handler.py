@@ -7,7 +7,7 @@ from cryptography.fernet import InvalidToken
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from passlib.hash import bcrypt
+from passlib.hash import pbkdf2_sha256 as password_hasher
 
 from ..security.encryption import decrypt_token, encrypt_token
 
@@ -47,11 +47,11 @@ def get_token_from_header(credentials: HTTPAuthorizationCredentials = Depends(se
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return bcrypt.verify(plain, hashed)
+    return password_hasher.verify(plain, hashed)
 
 
 def hash_password(password: str) -> str:
-    return bcrypt.hash(password)
+    return password_hasher.hash(password)
 
 
 def get_current_user(token: str = Depends(get_token_from_header)) -> dict:

@@ -254,7 +254,7 @@ export default function VoiceoverPage() {
               </select>
             </div>
 
-            {/* Settings sliders */
+            {/* Settings sliders */}
             <div className="sliders-row">
               <div className="form-group slider-item">
                 <div className="slider-label">

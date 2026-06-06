@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getPlatforms, getPublishStatus, getVideos, publishVideo } from '../../api/publishApi';
+import { getPlatforms, getPublishStatus, getVideos, publishVideo, uploadVideo, getScheduledPublishes } from '../../api/publishApi';
+import { getConnectedProviders, getProviderConnectUrl } from '../../api/authApi';
 import { runCopyrightScan } from '../../api/copyrightApi';
 import './PublishPage.css';
 
@@ -66,8 +67,14 @@ export default function PublishPage() {
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(false);
   const [backendStatus, setBackendStatus] = useState('Connecting...');
+  const [connectedProviders, setConnectedProviders] = useState({});
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [newVideoTitle, setNewVideoTitle] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const [scheduledPublishes, setScheduledPublishes] = useState([]);
   const [responseMessage, setResponseMessage] = useState('');
-  const [copyrightScanning, setCopyrightScanning] = useState(false);
+  const [prePublishScanning, setPrePublishScanning] = useState(false);
   const [copyrightReport, setCopyrightReport] = useState(null);
   const [copyrightError, setCopyrightError] = useState('');
 
@@ -96,9 +103,40 @@ export default function PublishPage() {
       } catch (error) {
         setBackendStatus('Offline - backend unavailable');
       }
+
+      try {
+        const providerRes = await getConnectedProviders();
+        if (providerRes?.providers?.length) {
+          setConnectedProviders(
+            providerRes.providers.reduce((acc, item) => {
+              acc[item.provider] = item.connected;
+              return acc;
+            }, {})
+          );
+        }
+      } catch (providerError) {
+        // Ignore provider fetch when not authenticated or not connected.
+      }
+
+      try {
+        const scheduleRes = await getScheduledPublishes();
+        if (scheduleRes?.scheduled?.length) {
+          setScheduledPublishes(scheduleRes.scheduled);
+        }
+      } catch (scheduleError) {
+        // Ignore schedule fetch when not authenticated or scheduler unavailable.
+      }
     }
 
     loadData();
+
+    const searchParams = new URLSearchParams(window.location.search);
+    const connectedProvider = searchParams.get('connected');
+    if (connectedProvider) {
+      setResponseMessage(`${connectedProvider.charAt(0).toUpperCase() + connectedProvider.slice(1)} account connected successfully.`);
+      window.history.replaceState({}, document.title, window.location.pathname);
+      setConnectedProviders(prev => ({ ...prev, [connectedProvider]: true }));
+    }
   }, []);
 
   const handleVideoSelect = id => {
@@ -113,6 +151,15 @@ export default function PublishPage() {
     );
   };
 
+  const handleProviderConnect = provider => {
+    window.location.href = getProviderConnectUrl(provider, '/publish');
+  };
+
+  const handleAddAccount = () => {
+    const nextProvider = ['youtube', 'instagram'].find(provider => !connectedProviders[provider]) || 'youtube';
+    handleProviderConnect(nextProvider);
+  };
+
   const handleConfigChange = (platform, field, value) => {
     setPlatformConfigs(prev => ({
       ...prev,
@@ -121,6 +168,53 @@ export default function PublishPage() {
         [field]: value,
       },
     }));
+  };
+
+  const formatBytes = bytes => {
+    if (!bytes) return '0 MB';
+    const units = ['bytes', 'KB', 'MB', 'GB'];
+    let index = 0;
+    let value = bytes;
+    while (value >= 1024 && index < units.length - 1) {
+      value /= 1024;
+      index += 1;
+    }
+    return `${value.toFixed(1)} ${units[index]}`;
+  };
+
+  const handleFileChange = event => {
+    const file = event.target.files?.[0] || null;
+    setUploadedFile(file);
+    setNewVideoTitle(file?.name || '');
+    setUploadError('');
+  };
+
+  const handleUpload = async () => {
+    if (!uploadedFile) {
+      setUploadError('Please choose a video file first.');
+      return;
+    }
+
+    setUploading(true);
+    setUploadError('');
+    setResponseMessage('');
+
+    try {
+      const response = await uploadVideo(uploadedFile, newVideoTitle || uploadedFile.name);
+      if (response?.status === 'success' && response.video) {
+        setVideos(prev => [...prev, response.video]);
+        setSelectedVideoId(response.video.id);
+        setUploadedFile(null);
+        setNewVideoTitle('');
+        setResponseMessage('Video uploaded successfully and ready to publish.');
+      } else {
+        setUploadError(response?.detail || response?.message || 'Upload failed.');
+      }
+    } catch (err) {
+      setUploadError('Upload failed. Please try again.');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const publishText = publishMode === 'draft'
@@ -136,11 +230,11 @@ export default function PublishPage() {
     setPublished(false);
     setResponseMessage('');
     setCopyrightError('');
-    setCopyrightReport(null);
-    setCopyrightScanning(true);
 
+    // Run pre-publish copyright scan and block publish on high risk
+    setPrePublishScanning(true);
     try {
-      const scanResponse = await runCopyrightScan({
+      const scan = await runCopyrightScan({
         videoId: selectedVideo.id,
         scanAudio: true,
         scanVideo: true,
@@ -148,21 +242,26 @@ export default function PublishPage() {
         scanTrademarks: true,
       });
 
-      setCopyrightReport(scanResponse);
-
-      if (scanResponse?.status !== 'Safe & Clear') {
-        setResponseMessage('Publish blocked: copyright scan found potential issues. Resolve the issues before publishing.');
+      setCopyrightReport(scan);
+      const hasHigh = (scan.findings || []).some(f => f.severity === 'High');
+      const score = typeof scan.overallScore === 'number' ? scan.overallScore : 100;
+      if (hasHigh || score < 85) {
+        setResponseMessage('Publish blocked: copyright risk detected. Resolve issues before publishing.');
         setPublishing(false);
+        setPrePublishScanning(false);
         return;
       }
-    } catch (error) {
-      setCopyrightError(error.message || 'Copyright scan failed.');
-      setResponseMessage('Unable to verify copyright status before publishing.');
+    } catch (err) {
+      setCopyrightReport(null);
+      setCopyrightError(err.message || 'Pre-publish scan failed.');
+      setResponseMessage('Pre-publish scan failed — cannot publish now.');
       setPublishing(false);
+      setPrePublishScanning(false);
       return;
     } finally {
-      setCopyrightScanning(false);
+      setPrePublishScanning(false);
     }
+    // proceed to publish if scan passed
 
     const payload = {
       videoId: selectedVideo.id,
@@ -213,6 +312,34 @@ export default function PublishPage() {
         <strong>{backendStatus}</strong>
       </div>
 
+      {copyrightReport && (
+        <div className="publish-scan-report glass-panel">
+          <div className="report-summary-row">
+            <div>
+              <h3>Latest Copyright Scan</h3>
+              <p>{copyrightReport.summary}</p>
+            </div>
+            <div className="scan-score-block" style={{ borderColor: copyrightReport.color }}>
+              <span>{copyrightReport.overallScore}</span>
+              <small>{copyrightReport.status}</small>
+            </div>
+          </div>
+          {copyrightReport.findings && copyrightReport.findings.length > 0 ? (
+            <div className="report-findings-list">
+              {copyrightReport.findings.map(item => (
+                <div key={item.id} className="report-finding-item">
+                  <strong>{item.type}</strong>
+                  <span>{item.severity} Risk</span>
+                  <p>{item.recommendation}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="report-safe-text">No major risks were detected; this asset is ready for publish review.</p>
+          )}
+        </div>
+      )}
+
       <div className="publish-layout">
         <div className="publish-main">
           <div className="selected-video-card glass-panel">
@@ -247,6 +374,36 @@ export default function PublishPage() {
                 <p>Select the best video you want to publish.</p>
               </div>
             </div>
+            <div className="upload-panel">
+              <div className="upload-panel-copy">
+                <h4>Upload Your Own Video</h4>
+                <p>Send your recorded or rendered video to VisionForge and publish it to social media.</p>
+              </div>
+              <div className="upload-controls">
+                <input
+                  type="file"
+                  accept="video/*"
+                  onChange={handleFileChange}
+                  className="pub-input"
+                />
+                <input
+                  type="text"
+                  value={newVideoTitle}
+                  onChange={e => setNewVideoTitle(e.target.value)}
+                  placeholder="Optional upload title"
+                  className="pub-input"
+                />
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={handleUpload}
+                  disabled={uploading || !uploadedFile}
+                >
+                  {uploading ? 'Uploading…' : 'Upload Video'}
+                </button>
+                {uploadError && <p className="error-text">{uploadError}</p>}
+              </div>
+            </div>
             <div className="video-select-grid">
               {videos.map(video => (
                 <button
@@ -263,9 +420,7 @@ export default function PublishPage() {
                 </button>
               ))}
             </div>
-          </div>
 
-          <div className="platform-customize glass-panel">
             <div className="section-title">
               <div>
                 <h3>Customize for Each Platform</h3>
@@ -373,27 +528,66 @@ export default function PublishPage() {
               </div>
             </div>
             <div className="accounts-list">
-              {platformsData.map(account => (
-                <div
-                  key={account.id}
-                  className={`account-row ${selectedPlatforms.includes(account.id) ? 'selected' : ''} ${account.connected ? 'clickable' : ''}`}
-                  onClick={() => account.connected && handlePlatformToggle(account.id)}
-                >
-                  <div className="account-avatar" style={{ background: `${account.color}22`, color: account.color }}>
-                    {account.icon}
+              {platformsData.map(account => {
+                const isConnected = connectedProviders[account.id] ?? account.connected;
+                return (
+                  <div
+                    key={account.id}
+                    className={`account-row ${selectedPlatforms.includes(account.id) ? 'selected' : ''} ${isConnected ? 'clickable' : ''}`}
+                    onClick={() => isConnected && handlePlatformToggle(account.id)}
+                  >
+                    <div className="account-avatar" style={{ background: `${account.color}22`, color: account.color }}>
+                      {account.icon}
+                    </div>
+                    <div className="account-copy">
+                      <span>{account.name}</span>
+                      <small>{account.account}</small>
+                    </div>
+                    {isConnected ? (
+                      <span className={`account-status ${selectedPlatforms.includes(account.id) ? 'selected' : 'connected'}`}>
+                        {selectedPlatforms.includes(account.id) ? 'Selected' : 'Connected'}
+                      </span>
+                    ) : account.id === 'youtube' || account.id === 'instagram' ? (
+                      <button
+                        type="button"
+                        className="connect-btn"
+                        onClick={() => handleProviderConnect(account.id)}
+                      >
+                        Connect
+                      </button>
+                    ) : (
+                      <span className="account-status disconnected">Connect</span>
+                    )}
                   </div>
-                  <div className="account-copy">
-                    <span>{account.name}</span>
-                    <small>{account.account}</small>
-                  </div>
-                  <span className={`account-status ${selectedPlatforms.includes(account.id) ? 'selected' : account.connected ? 'connected' : 'disconnected'}`}>
-                    {selectedPlatforms.includes(account.id) ? 'Selected' : account.connected ? 'Connected' : 'Connect'}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
-            <button type="button" className="btn-secondary connect-new">+ Connect New Account</button>
+            <button type="button" className="btn-secondary connect-new" onClick={handleAddAccount}>
+              + Connect New Account
+            </button>
           </div>
+
+          {scheduledPublishes.length > 0 && (
+            <div className="glass-panel schedule-panel">
+              <div className="section-title">
+                <div>
+                  <h3>Scheduled Publishes</h3>
+                  <p>Review upcoming auto publish jobs for your account.</p>
+                </div>
+              </div>
+              <div className="schedule-list">
+                {scheduledPublishes.map(task => (
+                  <div key={task.id} className="schedule-row">
+                    <div>
+                      <strong>{task.platforms.join(', ')}</strong>
+                      <p>{new Date(task.scheduledFor).toLocaleString()}</p>
+                    </div>
+                    <span className={`status-pill ${task.status}`}>{task.status}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="glass-panel publish-options-panel">
             <div className="section-title">
@@ -459,7 +653,7 @@ export default function PublishPage() {
         </aside>
       </div>
 
-      {copyrightScanning && (
+      {prePublishScanning && (
         <div className="publish-message glass-panel">
           <p>Running copyright scan before publishing...</p>
         </div>
@@ -471,11 +665,7 @@ export default function PublishPage() {
         </div>
       )}
 
-      {copyrightError && (
-        <div className="publish-message glass-panel error-text">
-          <p>{copyrightError}</p>
-        </div>
-      )}
+      {/* errors are shown in responseMessage */}
 
       {published && (
         <div className="publish-banner glass-panel">
@@ -488,11 +678,11 @@ export default function PublishPage() {
       )}
 
       <button
-        className={`pub-submit-btn btn-primary ${(publishing || copyrightScanning) ? 'loading' : ''}`}
+        className={`pub-submit-btn btn-primary ${(publishing || prePublishScanning) ? 'loading' : ''}`}
         onClick={handlePublish}
-        disabled={selectedPlatforms.length === 0 || publishing || copyrightScanning}
+        disabled={selectedPlatforms.length === 0 || publishing || prePublishScanning}
       >
-        {publishing || copyrightScanning ? 'Checking copyright…' : publishText}
+        {publishing || prePublishScanning ? 'Checking copyright…' : publishText}
       </button>
     </div>
   );

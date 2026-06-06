@@ -59,6 +59,10 @@ def csrf_protect(request: Request) -> None:
         return
     if any(request.url.path.startswith(path) for path in CSRF_EXEMPT_PATHS):
         return
+    # If an Authorization Bearer token is present, treat as API client and skip CSRF
+    auth = request.headers.get("authorization")
+    if auth and auth.lower().startswith("bearer "):
+        return
     verify_csrf_in_request(request)
 
 

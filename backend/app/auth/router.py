@@ -2,7 +2,7 @@ import json
 import os
 import secrets
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Optional
 
 import httpx
 from fastapi import APIRouter, HTTPException, Depends, Request, Response
@@ -11,6 +11,9 @@ from pydantic import BaseModel, EmailStr, Field
 
 from .jwt_handler import create_access_token, hash_password, verify_password, get_current_user
 from ..security.csrf import generate_csrf_token
+from ..publish_system.oauth_tokens import get_provider_token, save_provider_token
+
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
 USERS_FILE = os.path.join(DATA_DIR, "users.json")
@@ -30,6 +33,20 @@ OAUTH_CONFIG = {
         "scope": "read:user user:email",
         "client_id": os.environ.get("GITHUB_CLIENT_ID"),
         "client_secret": os.environ.get("GITHUB_CLIENT_SECRET"),
+    },
+    "youtube": {
+        "auth_url": "https://accounts.google.com/o/oauth2/v2/auth",
+        "token_url": "https://oauth2.googleapis.com/token",
+        "scope": "openid email profile https://www.googleapis.com/auth/youtube.upload",
+        "client_id": os.environ.get("YOUTUBE_CLIENT_ID"),
+        "client_secret": os.environ.get("YOUTUBE_CLIENT_SECRET"),
+    },
+    "instagram": {
+        "auth_url": "https://api.instagram.com/oauth/authorize",
+        "token_url": "https://api.instagram.com/oauth/access_token",
+        "scope": "user_profile,user_media",
+        "client_id": os.environ.get("INSTAGRAM_CLIENT_ID"),
+        "client_secret": os.environ.get("INSTAGRAM_CLIENT_SECRET"),
     },
 }
 
@@ -89,12 +106,18 @@ def csrf_token(response: Response):
 
 
 @router.get("/oauth/{provider}")
-def oauth_start(provider: str, response: Response):
+def oauth_start(provider: str, response: Response, request: Request, redirectTo: Optional[str] = None):
     config = _get_provider_config(provider)
+    if provider in ["youtube", "instagram"]:
+        user = request.session.get("user")
+        if not user:
+            raise HTTPException(status_code=401, detail="Must be signed in to connect a publishing account.")
+
     state = secrets.token_urlsafe(24)
     redirect_uri = _build_redirect_uri(provider)
+    callback_redirect = redirectTo or FRONTEND_URL
 
-    if provider == "google":
+    if provider == "google" or provider == "youtube":
         auth_url = (
             f"{config['auth_url']}?response_type=code&client_id={config['client_id']}"
             f"&redirect_uri={redirect_uri}&scope={config['scope']}&state={state}&access_type=offline&prompt=consent"
@@ -106,7 +129,8 @@ def oauth_start(provider: str, response: Response):
         )
 
     response = RedirectResponse(auth_url)
-    response.set_cookie("oauth_state", state, secure=True, httponly=True, samesite="lax")
+    response.set_cookie("oauth_state", state, secure=os.environ.get("FORCE_HTTPS", "false").lower() in ["1", "true", "yes"], httponly=True, samesite="lax")
+    response.set_cookie("oauth_redirect", callback_redirect, secure=os.environ.get("FORCE_HTTPS", "false").lower() in ["1", "true", "yes"], httponly=True, samesite="lax")
     return response
 
 
@@ -116,6 +140,7 @@ async def oauth_callback(request: Request):
     code = request.query_params.get("code")
     state = request.query_params.get("state")
     cookie_state = request.cookies.get("oauth_state")
+    redirect_to = request.cookies.get("oauth_redirect") or FRONTEND_URL
 
     if not provider or not code or not state or state != cookie_state:
         raise HTTPException(status_code=400, detail="Invalid OAuth callback state")
@@ -153,15 +178,25 @@ async def oauth_callback(request: Request):
     if token_response.status_code != 200 or not token_data:
         raise HTTPException(status_code=502, detail="OAuth token exchange failed")
 
-    return {
-        "status": "ok",
-        "provider": provider,
-        "tokenData": token_data,
-    }
+    user = request.session.get("user")
+    if user:
+        save_provider_token(user.get("sub"), provider, token_data)
+        return RedirectResponse(f"{redirect_to}?connected={provider}")
+
+    return RedirectResponse(redirect_to)
+
+
+@router.get("/providers")
+def list_connected_providers(current_user: Dict = Depends(get_current_user)):
+    providers = [
+        {"provider": "youtube", "connected": bool(get_provider_token(current_user.get("sub"), "youtube"))},
+        {"provider": "instagram", "connected": bool(get_provider_token(current_user.get("sub"), "instagram"))},
+    ]
+    return {"status": "ok", "providers": providers}
 
 
 @router.post("/register")
-def register(payload: RegisterIn):
+def register(request: Request, payload: RegisterIn):
     users = _read_users()
     if any(u["email"].lower() == payload.email.lower() for u in users):
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -177,12 +212,14 @@ def register(payload: RegisterIn):
     users.append(user)
     _write_users(users)
 
+    request.session["user"] = {"sub": user_id, "email": user["email"], "name": user["name"]}
+
     token = create_access_token({"sub": user_id, "email": user["email"], "name": user["name"]})
     return {"status": "ok", "user": {"id": user_id, "email": user["email"], "name": user["name"]}, "access_token": token}
 
 
 @router.post("/login")
-def login(payload: LoginIn):
+def login(request: Request, payload: LoginIn):
     users = _read_users()
     user = next((u for u in users if u["email"].lower() == payload.email.lower()), None)
     if not user:
@@ -190,6 +227,8 @@ def login(payload: LoginIn):
 
     if not verify_password(payload.password, user["password"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    request.session["user"] = {"sub": user["id"], "email": user["email"], "name": user["name"]}
 
     token = create_access_token({"sub": user["id"], "email": user["email"], "name": user["name"]})
     return {"status": "ok", "user": {"id": user["id"], "email": user["email"], "name": user["name"]}, "access_token": token}

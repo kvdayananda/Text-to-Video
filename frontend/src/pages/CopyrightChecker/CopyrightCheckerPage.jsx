@@ -15,35 +15,14 @@ export default function CopyrightCheckerPage() {
   const [resolving, setResolving] = useState(false);
   const [scanError, setScanError] = useState('');
 
-  const [report, setReport] = useState({
-    status: 'Medium Risk',
-    color: '#fbbf24',
-    overallScore: 78, // out of 100 Compliance Score
-    matches: [
-      {
-        id: 1,
-        type: 'Audio Sync Match',
-        severity: 'Medium',
-        timestamp: '00:15 - 00:22',
-        source: 'Matching track: "Synthwave Breeze" (Universal Music Group)',
-        recommendation: 'Replace with a royalty-free track from the VisionForge music library.'
-      },
-      {
-        id: 2,
-        type: 'Visual Frame Match',
-        severity: 'Low',
-        timestamp: '00:02 - 00:05',
-        source: 'Similar frame patterns found in YouTube ID: dQw4w9WgXcQ (3.2% similarity)',
-        recommendation: 'Safe to proceed, no action required.'
-      }
-    ]
-  });
+  const [report, setReport] = useState(null);
 
   const handleScan = async () => {
     setScanning(true);
     setScanCompleted(false);
     setScanProgress(0);
     setScanError('');
+    setReport(null);
 
     const steps = [
       'Decomposing video files into frame matrices...',
@@ -76,11 +55,10 @@ export default function CopyrightCheckerPage() {
       });
 
       clearInterval(interval);
-      setReport(prev => ({
-        ...prev,
+      setReport({
         ...response,
-        matches: response.findings || prev.matches,
-      }));
+        findings: response.findings || [],
+      });
       setScanProgress(100);
       setScanCompleted(true);
     } catch (error) {
@@ -227,7 +205,7 @@ export default function CopyrightCheckerPage() {
                 <span className="scan-progress-pct">{scanProgress}%</span>
               </div>
             </div>
-          ) : !scanCompleted ? (
+          ) : !scanCompleted || !report ? (
             <div className="cc-placeholder glass-panel">
               <div className="ccp-icon">🛡️</div>
               <h3>Compliance Risk Report</h3>
@@ -253,7 +231,7 @@ export default function CopyrightCheckerPage() {
                 <span className="status-indicator-dot" style={{ background: report.color }} />
                 <div>
                   <h4>Platform Status: {report.status}</h4>
-                  <p>Overall safety score is {report.overallScore}/100. {report.status === 'Safe & Clear' ? 'All clear! Your video is safe for immediate publishing.' : 'We found 1 moderate compliance match.'}</p>
+                  <p>Overall safety score is {report.overallScore}/100. {report.status === 'Safe & Clear' ? 'All clear! Your video is safe for immediate publishing.' : 'Review the issues below and resolve them before publishing.'}</p>
                 </div>
               </div>
 
@@ -261,7 +239,7 @@ export default function CopyrightCheckerPage() {
               <div className="matches-section">
                 <h3>Detected Safety Incidents</h3>
                 <div className="matches-list">
-                  {report.matches.map(m => (
+                  {(report.findings && report.findings.length > 0) ? report.findings.map(m => (
                     <div key={m.id} className="match-card">
                       <div className="match-card-head">
                         <span className={`match-badge severity-${m.severity.toLowerCase()}`}>
@@ -276,7 +254,12 @@ export default function CopyrightCheckerPage() {
                         <p>{m.recommendation}</p>
                       </div>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="match-card safe-card">
+                      <h4>No high-risk matches found</h4>
+                      <p>Your content passed the current media scan. You can still review the details before publishing.</p>
+                    </div>
+                  )}
                 </div>
               </div>
 

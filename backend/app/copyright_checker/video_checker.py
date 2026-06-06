@@ -5,6 +5,13 @@ import numpy as np
 from PIL import Image
 from moviepy.editor import VideoFileClip
 
+
+def _frame_histogram(image: Image.Image) -> np.ndarray:
+    gray = image.convert("L")
+    hist = np.array(gray.histogram(), dtype=np.float32)
+    return hist / max(hist.sum(), 1.0)
+
+
 async def scan_video_duplicate(video_path: str) -> dict[str, Any]:
     if not os.path.exists(video_path):
         return {
@@ -17,24 +24,40 @@ async def scan_video_duplicate(video_path: str) -> dict[str, Any]:
 
     try:
         clip = VideoFileClip(video_path)
-        duration = int(min(10, clip.duration))
-        thumbnails = []
-        for t in np.linspace(0, duration, num=3):
-            frame = clip.get_frame(t)
-            image = Image.fromarray(frame).convert("L").resize((160, 90))
-            thumbnails.append(np.array(image).astype(float).mean())
-        clip.reader.close()
-        clip.audio.reader.close_proc()
+        duration = min(10, clip.duration)
+        frames = []
+        timestamps = np.linspace(0.5, max(0.5, duration - 0.5), num=4)
 
-        avg_brightness = float(sum(thumbnails) / len(thumbnails))
-        duplicate_score = int(max(0, min(100, 100 - abs(avg_brightness - 120))))
+        for t in timestamps:
+            frame = clip.get_frame(min(t, clip.duration - 0.1))
+            image = Image.fromarray(frame).convert("L").resize((160, 90))
+            frames.append(_frame_histogram(image))
+
+        clip.close()
+
+        if len(frames) < 2:
+            return {
+                "available": True,
+                "duplicate": False,
+                "score": 20,
+                "source": "Local duplicate fingerprint comparison",
+                "message": "Not enough frames for duplicate analysis.",
+            }
+
+        distances = [
+            float(np.linalg.norm(frames[i] - frames[j]))
+            for i in range(len(frames))
+            for j in range(i + 1, len(frames))
+        ]
+        avg_distance = float(sum(distances) / len(distances))
+        duplicate_score = int(max(0, min(100, 100 - avg_distance * 110)))
 
         return {
             "available": True,
-            "duplicate": duplicate_score > 70,
+            "duplicate": duplicate_score > 68,
             "score": duplicate_score,
             "source": "Local duplicate fingerprint comparison",
-            "message": "A visual similarity signature is present." if duplicate_score > 70 else "No strong duplicate video pattern detected.",
+            "message": "Detected repeated frame patterns that are often associated with duplicated content." if duplicate_score > 68 else "No strong duplicate video pattern detected.",
         }
     except Exception:
         return {

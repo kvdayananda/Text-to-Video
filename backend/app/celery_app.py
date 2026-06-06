@@ -25,4 +25,5 @@ celery_app.conf.update(
 )
 
 # Auto-discover tasks under video engine
+# Note: path is relative to the backend/ working directory (no "backend." prefix)
 celery_app.autodiscover_tasks(["app.video_engine"])

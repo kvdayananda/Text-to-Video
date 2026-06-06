@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
@@ -32,7 +32,43 @@ class CopyrightScanResponse(BaseModel):
     overallScore: int
     color: str
     findings: list[MatchEntry]
-    details: dict
+    details: dict[str, Any]
+
+
+def scan_trademark_overlay(video_path: str) -> dict[str, Any]:
+    trademarks = [
+        {"term": "nike", "source": "Nike brand overlay"},
+        {"term": "apple", "source": "Apple brand overlay"},
+        {"term": "coca-cola", "source": "Coca-Cola brand overlay"},
+        {"term": "starbucks", "source": "Starbucks brand overlay"},
+        {"term": "google", "source": "Google brand overlay"},
+    ]
+    basename = os.path.basename(video_path).lower()
+    matches = []
+
+    for trademark in trademarks:
+        if trademark["term"] in basename:
+            matches.append({
+                "type": "Trademark Overlay Check",
+                "severity": "Medium",
+                "timestamp": "00:00 - 00:30",
+                "source": trademark["source"],
+                "recommendation": "Remove the trademarked logo or replace the overlay with a permitted asset.",
+            })
+
+    if matches:
+        return {
+            "available": True,
+            "matches": matches,
+            "message": "Trademark indicators found in the selected asset metadata.",
+        }
+
+    return {
+        "available": True,
+        "matches": [],
+        "message": "No obvious trademark overlays were detected in the asset metadata.",
+    }
+
 
 @router.post("/scan", response_model=CopyrightScanResponse)
 async def scan_copyright(request: CopyrightScanRequest):
@@ -42,7 +78,6 @@ async def scan_copyright(request: CopyrightScanRequest):
     video_path = os.path.join(base_video_dir, video_file_name)
 
     if request.scanAudio and not os.path.exists(video_path):
-        # Fallback to demo mode when the video file is not available locally.
         audio_result = {
             "available": False,
             "match": False,
@@ -66,7 +101,7 @@ async def scan_copyright(request: CopyrightScanRequest):
         "message": "Image similarity scan was skipped.",
     }
 
-    video_result = scan_video_duplicate(video_path) if request.scanVideo else {
+    video_result = await scan_video_duplicate(video_path) if request.scanVideo else {
         "available": False,
         "duplicate": False,
         "score": 0,
@@ -74,11 +109,17 @@ async def scan_copyright(request: CopyrightScanRequest):
         "message": "Video duplication scan was skipped.",
     }
 
+    trademark_result = scan_trademark_overlay(video_path) if request.scanTrademarks else {
+        "available": False,
+        "matches": [],
+        "message": "Trademark scan was skipped.",
+    }
+
     report = build_risk_report(
         audio_scan=audio_result,
         video_scan=video_result,
         image_scan=image_result,
-        trademark_scan=request.scanTrademarks,
+        trademark_scan=trademark_result,
     )
 
     return {
@@ -91,5 +132,6 @@ async def scan_copyright(request: CopyrightScanRequest):
             "audio": audio_result,
             "video": video_result,
             "image": image_result,
+            "trademark": trademark_result,
         },
     }

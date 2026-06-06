@@ -26,5 +26,90 @@
     "email": "testuser+1779465398@example.com",
     "password": "$2b$12$yQtzEPQEyumIqrsfrfV4Lu580mNh5FYBzO3X72trC1CgN4qdKUMKi",
     "createdAt": "2026-05-22T15:56:38.704617Z"
+  },
+  {
+    "id": 5,
+    "name": "Terminal Test",
+    "email": "terminal_test_12345@example.com",
+    "password": "$pbkdf2-sha256$29000$ZAzhfK9VCsGYU.od43zvvQ$L4ZdX/SH1t3mxIUKlKiQuWb4GnTCHZdsTgAbxN5.p1Y",
+    "createdAt": "2026-06-06T10:03:30.070741Z"
+  },
+  {
+    "id": 6,
+    "name": "daya",
+    "email": "daya@gmail.com",
+    "password": "$pbkdf2-sha256$29000$nhPiPOf8n7OWEkKIUWoNIQ$UN8UMLvpCN/r2zM/tMPDWA8VnkHA8dTXEzQeBc6IOcM",
+    "createdAt": "2026-06-06T10:06:20.632454Z",
+    "subscriptionPlan": "Free",
+    "subscriptionStatus": "none",
+    "billingCycle": "monthly",
+    "subscriptionRenewsAt": null,
+    "paymentMethod": null,
+    "paymentHistory": []
+  },
+  {
+    "id": 7,
+    "name": "Test User",
+    "email": "testuser+1780741148@example.com",
+    "password": "$pbkdf2-sha256$29000$TAkBIMRY6/3/37t3bs3Zuw$cmFbbM8M2KtxPoJb4jt/f4tBTIb2gdJgReeq9/Q/.QI",
+    "createdAt": "2026-06-06T10:19:08.756130Z",
+    "subscriptionPlan": "Free",
+    "subscriptionStatus": "none",
+    "billingCycle": "monthly",
+    "subscriptionRenewsAt": null,
+    "paymentMethod": null,
+    "paymentHistory": []
+  },
+  {
+    "id": 8,
+    "name": "Test User",
+    "email": "testuser+1780741294@example.com",
+    "password": "$pbkdf2-sha256$29000$lfJey5nz/l9LqbW2tra2Ng$Djdv/l.lNl5bWgkL8AnbGcEYOitcJNqhGLG0RAN1v1U",
+    "createdAt": "2026-06-06T10:21:34.302862Z",
+    "subscriptionPlan": "Free",
+    "subscriptionStatus": "none",
+    "billingCycle": "monthly",
+    "subscriptionRenewsAt": null,
+    "paymentMethod": null,
+    "paymentHistory": []
+  },
+  {
+    "id": 9,
+    "name": "Test User",
+    "email": "testuser+1780741339@example.com",
+    "password": "$pbkdf2-sha256$29000$hvB.LyUEICQE4FyLMQagdA$0c6LGxXrWrMmjxzTEOicZejJiLfh/vJ0SLhjbzff6Dc",
+    "createdAt": "2026-06-06T10:22:19.375416Z",
+    "subscriptionPlan": "Free",
+    "subscriptionStatus": "none",
+    "billingCycle": "monthly",
+    "subscriptionRenewsAt": null,
+    "paymentMethod": null,
+    "paymentHistory": []
+  },
+  {
+    "id": 10,
+    "name": "Test User",
+    "email": "testuser+1780741353@example.com",
+    "password": "$pbkdf2-sha256$29000$IMR4T0npXWtNiXHOWatVig$IVGZBlOqzvxd7.gUJHIE7ZuH9qOR5xD2NJeSnCzjvd8",
+    "createdAt": "2026-06-06T10:22:33.073365Z",
+    "subscriptionPlan": "Free",
+    "subscriptionStatus": "none",
+    "billingCycle": "monthly",
+    "subscriptionRenewsAt": null,
+    "paymentMethod": null,
+    "paymentHistory": []
+  },
+  {
+    "id": 11,
+    "name": "Test User",
+    "email": "testuser+1780741383@example.com",
+    "password": "$pbkdf2-sha256$29000$zzknBCBESElpLaW09r7XWg$yb7J2U5uwHOtMFZUaHGVwlaYle4wPKTi2n2jR4b0lCY",
+    "createdAt": "2026-06-06T10:23:03.545302Z",
+    "subscriptionPlan": "Free",
+    "subscriptionStatus": "none",
+    "billingCycle": "monthly",
+    "subscriptionRenewsAt": null,
+    "paymentMethod": null,
+    "paymentHistory": []
   }
 ]

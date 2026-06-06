@@ -1,8 +1,10 @@
 import os
-from datetime import datetime
+import secrets
+import shutil
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, File, HTTPException, UploadFile, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
@@ -10,6 +12,9 @@ from pydantic import BaseModel, Field
 from starlette.middleware.sessions import SessionMiddleware
 
 from .security.csrf import CSRFMiddleware, csrf_protect
+from .publish_system.youtube_publish import publish_to_youtube
+from .publish_system.instagram_publish import publish_to_instagram
+from .publish_system.scheduler import get_scheduled_publishes, schedule_publish
 
 app = FastAPI(
     title="VisionForge AI Backend",
@@ -25,7 +30,19 @@ VOICE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "voice
 os.makedirs(VOICE_DIR, exist_ok=True)
 app.mount("/voiceovers", StaticFiles(directory=VOICE_DIR), name="voiceovers")
 
-API_ORIGINS = [origin.strip() for origin in os.environ.get("API_ORIGINS", "http://localhost:5173,http://localhost:3000").split(",") if origin.strip()]
+UPLOAD_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "uploads"))
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+
+API_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get(
+        "API_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000,http://localhost:4173,http://127.0.0.1:4173"
+            ",http://localhost:5174,http://127.0.0.1:5174"
+    ).split(",")
+    if origin.strip()
+]
 
 if os.environ.get("FORCE_HTTPS", "false").lower() in ["1", "true", "yes"]:
     app.add_middleware(HTTPSRedirectMiddleware)
@@ -53,6 +70,7 @@ from .voice_engine.router import router as voice_router
 from .seo_engine.router import router as seo_router
 from .thumbnail_engine.router import router as thumbnail_router
 from .copyright_checker.router import router as copyright_router
+from .publish_system.oauth_tokens import get_provider_token
 
 THUMBNAIL_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "thumbnails"))
 os.makedirs(THUMBNAIL_DIR, exist_ok=True)
@@ -141,6 +159,18 @@ async def list_platforms():
     return {"status": "ok", "platforms": PLATFORMS}
 
 
+def _parse_schedule_time(value: Optional[str]) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        schedule_time = datetime.fromisoformat(value)
+        if schedule_time.tzinfo is None:
+            schedule_time = schedule_time.replace(tzinfo=timezone.utc)
+        return schedule_time
+    except ValueError:
+        return None
+
+
 @app.get("/api/publish/status")
 async def publish_status():
     return {
@@ -150,16 +180,117 @@ async def publish_status():
     }
 
 
+@app.get("/api/publish/scheduled")
+async def list_scheduled_publishes(current_user: dict = Depends(get_current_user)):
+    user_id = str(current_user.get("sub"))
+    scheduled = [
+        task for task in get_scheduled_publishes()
+        if str(task.get("user", {}).get("id")) == user_id
+    ]
+    return {"status": "ok", "scheduled": scheduled}
+
+
+@app.post("/api/publish/upload", dependencies=[Depends(csrf_protect)])
+async def upload_video(
+    file: UploadFile = File(...),
+    title: Optional[str] = None,
+    current_user: dict = Depends(get_current_user),
+):
+    filename = f"{secrets.token_hex(8)}_{file.filename}"
+    destination = os.path.join(UPLOAD_DIR, filename)
+
+    with open(destination, "wb") as out_file:
+        shutil.copyfileobj(file.file, out_file)
+
+    next_id = max([video.get("id", 0) for video in VIDEOS] + [0]) + 1
+    size_mb = f"{os.path.getsize(destination) / (1024 * 1024):.1f} MB"
+
+    new_video = {
+        "id": next_id,
+        "title": title or file.filename,
+        "thumb": "📤",
+        "duration": "00:00",
+        "resolution": "1920 x 1080",
+        "size": size_mb,
+        "status": "Uploaded",
+        "description": f"Uploaded by {current_user.get('email', 'user')}.",
+        "path": destination,
+    }
+    VIDEOS.append(new_video)
+
+    return {"status": "success", "video": new_video}
+
+
 @app.post("/api/publish", dependencies=[Depends(csrf_protect)])
 async def publish_video(request: PublishRequest, current_user: dict = Depends(get_current_user)):
+    if not request.platforms:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Select at least one platform before publishing.")
+
+    video = next((video for video in VIDEOS if video["id"] == request.videoId), None)
+    if not video:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Video not found")
+
+    metadata = request.metadata or {}
+
+    if request.publishMode == "later":
+        publish_time = _parse_schedule_time(request.scheduleTime)
+        if not publish_time or publish_time <= datetime.utcnow().replace(tzinfo=timezone.utc):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Schedule time must be in the future")
+
+        def executor(task):
+            results = []
+            for platform in task["platforms"]:
+                platform_metadata = task["metadata"].get(platform, {})
+                provider_token = get_provider_token(str(current_user.get("sub")), platform)
+                if platform == "youtube":
+                    results.append(publish_to_youtube(video, platform_metadata, provider_token, str(current_user.get("sub"))))
+                elif platform == "instagram":
+                    results.append(publish_to_instagram(video, platform_metadata, provider_token, str(current_user.get("sub"))))
+                else:
+                    results.append({"platform": platform, "status": "unsupported"})
+            return results
+
+        scheduled_task = schedule_publish(
+            request.videoId,
+            request.platforms,
+            metadata,
+            publish_time,
+            current_user,
+            executor,
+        )
+
+        return {
+            "status": "scheduled",
+            "message": "Publish job scheduled successfully.",
+            "scheduledTask": scheduled_task,
+        }
+
+    if request.publishMode == "draft":
+        return {
+            "status": "draft",
+            "message": "Draft saved. You can publish this video later.",
+            "videoId": request.videoId,
+            "metadata": metadata,
+        }
+
+    publish_results = []
+    for platform in request.platforms:
+        platform_metadata = metadata.get(platform, {})
+        provider_token = get_provider_token(str(current_user.get("sub")), platform)
+        if platform == "youtube":
+            publish_results.append(publish_to_youtube(video, platform_metadata, provider_token, str(current_user.get("sub"))))
+        elif platform == "instagram":
+            publish_results.append(publish_to_instagram(video, platform_metadata, provider_token, str(current_user.get("sub"))))
+        else:
+            publish_results.append({"platform": platform, "status": "unsupported"})
+
     published_at = datetime.utcnow().isoformat() + "Z"
     return {
         "status": "success",
-        "message": "Publish request received.",
+        "message": "Publish request completed.",
         "videoId": request.videoId,
         "platforms": request.platforms,
         "publishMode": request.publishMode,
-        "scheduleTime": request.scheduleTime,
         "publishedAt": published_at,
-        "metadata": request.metadata,
+        "results": publish_results,
     }

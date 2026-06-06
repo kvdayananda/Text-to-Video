@@ -9,6 +9,19 @@ async function buildHeaders() {
   };
 }
 
+export function getProviderConnectUrl(provider, redirectTo = '/publish') {
+  return `${API_BASE}/api/auth/oauth/${provider}?redirectTo=${encodeURIComponent(redirectTo)}`;
+}
+
+export async function getConnectedProviders() {
+  const token = localStorage.getItem('vf_token');
+  const response = await fetch(`${API_BASE}/api/auth/providers`, {
+    credentials: 'include',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return response.json();
+}
+
 export async function register(payload) {
   const headers = await buildHeaders();
   const response = await fetch(`${API_BASE}/api/auth/register`, {

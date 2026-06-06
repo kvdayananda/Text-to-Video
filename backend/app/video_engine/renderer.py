@@ -2,7 +2,8 @@ import os
 import tempfile
 from typing import List
 
-from moviepy.editor import ColorClip, concatenate_videoclips
+from moviepy.video.VideoClip import ColorClip
+from moviepy.video.compositing.concatenate import concatenate_videoclips
 
 from .effects import apply_text_overlay
 from .transitions import crossfade_clips
