@@ -31,6 +31,21 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Run backend tests
+        run: |
+          cd backend
+          python -m pytest -q
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm install
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+
       - name: Build and push backend image
         uses: docker/build-push-action@v4
         with:
@@ -73,19 +88,19 @@ jobs:
           RAILWAY_API_KEY: ${{ secrets.RAILWAY_API_KEY }}
         run: |
           # login non-interactively
-          railway login --apiKey "$RAILWAY_API_KEY" || true
+          railway login --apiKey "$RAILWAY_API_KEY"
 
       - name: Link Project
         env:
           RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
         run: |
           # link the repository to the Railway project (no-op if already linked)
-          railway link --project "$RAILWAY_PROJECT_ID" || true
+          railway link --project "$RAILWAY_PROJECT_ID"
 
       - name: Deploy to Railway
         env:
           RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
         run: |
           # Deploy using railway CLI; adjust service names in Railway if needed
-          railway up --project "$RAILWAY_PROJECT_ID" --detach || true
+          railway up --project "$RAILWAY_PROJECT_ID" --detach
 
